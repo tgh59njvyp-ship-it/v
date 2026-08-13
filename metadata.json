@@ -1,0 +1,6 @@
+{
+  "name": "Web Browser",
+  "description": "A web browser with full-screen view, tabs, bookmarks, and reader mode.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
