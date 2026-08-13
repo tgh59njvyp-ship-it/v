@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Home, Bookmark as BookmarkIcon, History as HistoryIcon, LayoutGrid } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Home, Bookmark as BookmarkIcon, History as HistoryIcon, LayoutGrid, Monitor } from 'lucide-react';
 import { Tab, Bookmark, HistoryItem } from './types';
 import { TabBar } from './components/TabBar';
 import { BrowserHeader } from './components/BrowserHeader';
@@ -276,12 +276,15 @@ export default function App() {
 
       {/* Mobile Bottom Navigation (Visible only on mobile) */}
       {!isFullscreen && (
-        <div className="md:hidden flex items-center justify-between bg-white border-t border-zinc-200 px-4 py-2 shrink-0">
+        <div className="md:hidden flex items-center justify-between bg-white border-t border-zinc-200 px-3 py-2 shrink-0">
           <button onClick={handleBack} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
           <button onClick={handleForward} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
             <ArrowRight className="w-5 h-5" />
+          </button>
+          <button onClick={() => setIsFullscreen(true)} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors" title="大画面で見る">
+            <Monitor className="w-5 h-5" />
           </button>
           <button onClick={handleHome} className="p-3 bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl transition-colors shadow-sm -mt-4">
             <Home className="w-5 h-5" />
