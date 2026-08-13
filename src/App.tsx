@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ArrowLeft, ArrowRight, Home, Bookmark as BookmarkIcon, History as HistoryIcon, LayoutGrid } from 'lucide-react';
 import { Tab, Bookmark, HistoryItem } from './types';
 import { TabBar } from './components/TabBar';
 import { BrowserHeader } from './components/BrowserHeader';
@@ -229,7 +230,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none">
+    <div className="flex flex-col h-[100dvh] w-screen overflow-hidden bg-white font-sans text-zinc-900 select-none pb-[env(safe-area-inset-bottom)]">
       {/* Top Tab Bar (Hidden in Fullscreen mode unless hovered or desired) */}
       {!isFullscreen && (
         <TabBar
@@ -273,6 +274,27 @@ export default function App() {
         onOpenExternal={handleOpenExternal}
       />
 
+      {/* Mobile Bottom Navigation (Visible only on mobile) */}
+      {!isFullscreen && (
+        <div className="md:hidden flex items-center justify-between bg-white border-t border-zinc-200 px-4 py-2 shrink-0">
+          <button onClick={handleBack} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <button onClick={handleForward} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
+            <ArrowRight className="w-5 h-5" />
+          </button>
+          <button onClick={handleHome} className="p-3 bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl transition-colors shadow-sm -mt-4">
+            <Home className="w-5 h-5" />
+          </button>
+          <button onClick={() => setIsBookmarksOpen(true)} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
+            <BookmarkIcon className="w-5 h-5" />
+          </button>
+          <button onClick={() => setIsHistoryOpen(true)} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
+            <LayoutGrid className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       {/* Modals */}
       <BookmarksModal
         isOpen={isBookmarksOpen}
@@ -298,3 +320,4 @@ export default function App() {
     </div>
   );
 }
+

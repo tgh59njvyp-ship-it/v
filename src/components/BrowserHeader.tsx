@@ -27,7 +27,7 @@ interface BrowserHeaderProps {
   onOpenBookmarks: () => void;
   onOpenHistory: () => void;
   onOpenAiSummary: () => void;
-  onZoomChange: (zoom: number) => void; // Keeping prop to avoid breaking App.tsx
+  onZoomChange: (zoom: number) => void;
   onOpenExternal: (url: string) => void;
   onToggleReaderMode: () => void;
 }
@@ -70,13 +70,13 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
   const isSecure = activeTab.url.startsWith('https://');
 
   return (
-    <div className="flex items-center bg-slate-900 border-b border-slate-800 text-slate-200 px-3 py-2 space-x-2">
-      {/* Navigation Controls */}
-      <div className="flex items-center space-x-1 shrink-0">
+    <div className="flex items-center bg-white border-b border-zinc-200 text-zinc-900 px-2 md:px-3 py-2 space-x-2">
+      {/* Navigation Controls (Desktop Only) */}
+      <div className="hidden md:flex items-center space-x-1 shrink-0">
         <button
           type="button"
           onClick={onBack}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-black hover:bg-zinc-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
           title="戻る"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -84,7 +84,7 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
         <button
           type="button"
           onClick={onForward}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-black hover:bg-zinc-100 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
           title="進む"
         >
           <ArrowRight className="w-4 h-4" />
@@ -92,8 +92,8 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
         <button
           type="button"
           onClick={onReload}
-          className={`p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors ${
-            activeTab.isLoading ? 'animate-spin text-indigo-400' : ''
+          className={`p-1.5 rounded-lg text-zinc-500 hover:text-black hover:bg-zinc-100 transition-colors ${
+            activeTab.isLoading ? 'animate-spin text-black' : ''
           }`}
           title="再読み込み"
         >
@@ -102,7 +102,7 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
         <button
           type="button"
           onClick={onHome}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-black hover:bg-zinc-100 transition-colors"
           title="ホーム画面"
         >
           <Home className="w-4 h-4" />
@@ -110,60 +110,62 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
       </div>
 
       {/* URL Bar */}
-      <form onSubmit={handleSubmit} className="flex-1 flex items-center bg-slate-950 border border-slate-700/80 rounded-xl px-3 py-1.5 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all shadow-inner min-w-0">
+      <form onSubmit={handleSubmit} className="flex-1 flex items-center bg-zinc-50 border border-zinc-200 rounded-xl px-3 py-1.5 focus-within:border-black focus-within:ring-1 focus-within:ring-black transition-all shadow-sm min-w-0">
         {activeTab.url === '' ? (
-          <Search className="w-4 h-4 text-slate-500 mr-2 shrink-0" />
+          <Search className="w-4 h-4 text-zinc-400 mr-2 shrink-0" />
         ) : isSecure ? (
           <span title="安全な接続 (HTTPS)" className="inline-flex items-center mr-2 shrink-0">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
           </span>
         ) : (
-          <div className="w-2 h-2 rounded-full bg-amber-400 mr-2 shrink-0" title="安全ではない接続" />
+          <div className="w-2 h-2 rounded-full bg-amber-500 mr-2 shrink-0" title="安全ではない接続" />
         )}
 
         <input
           type="text"
           value={inputUrl}
           onChange={(e) => setInputUrl(e.target.value)}
-          placeholder="URLを入力するか、Googleで検索"
-          className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none min-w-0"
+          placeholder="検索またはURLを入力"
+          className="w-full bg-transparent text-sm text-zinc-900 placeholder-zinc-500 focus:outline-none min-w-0"
         />
 
+        {/* Favorite/Bookmark Toggle (Inside URL bar for both Mobile and Desktop) */}
         {activeTab.url && activeTab.url !== 'about:blank' && (
           <button
             type="button"
             onClick={onToggleBookmark}
             className={`p-1 rounded-md ml-1 transition-colors shrink-0 ${
-              isBookmarked ? 'text-amber-400 bg-amber-400/10' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              isBookmarked ? 'text-amber-500 bg-amber-50' : 'text-zinc-400 hover:text-black hover:bg-zinc-200'
             }`}
-            title={isBookmarked ? 'ブックマーク登録済み' : 'ブックマークに追加'}
+            title={isBookmarked ? 'お気に入り解除' : 'お気に入りに追加'}
           >
-            <Star className={`w-4 h-4 ${isBookmarked ? 'fill-amber-400' : ''}`} />
+            <Star className={`w-4 h-4 ${isBookmarked ? 'fill-amber-500' : ''}`} />
           </button>
         )}
       </form>
 
-      {/* Action Buttons Toolbar */}
-      <div className="flex items-center space-x-1 shrink-0 border-l border-slate-800 pl-2">
-        <button
-          type="button"
-          onClick={onToggleReaderMode}
-          disabled={!activeTab.url || activeTab.url === 'about:blank'}
-          className={`p-1.5 rounded-lg transition-colors ${
-            activeTab.isReaderMode 
-              ? 'bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/30' 
-              : 'text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed'
-          }`}
-          title="リーダー表示 (エラー回避/読みやすくする)"
-        >
-          <BookOpen className="w-4 h-4" />
-        </button>
+      {/* Reader Mode (Visible everywhere) */}
+      <button
+        type="button"
+        onClick={onToggleReaderMode}
+        disabled={!activeTab.url || activeTab.url === 'about:blank'}
+        className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+          activeTab.isReaderMode 
+            ? 'bg-black text-white shadow-md' 
+            : 'text-zinc-500 hover:text-black hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed'
+        }`}
+        title="リーダー表示 (エラー回避/読みやすくする)"
+      >
+        <BookOpen className="w-4 h-4" />
+      </button>
 
+      {/* Action Buttons Toolbar (Desktop Only) */}
+      <div className="hidden md:flex items-center space-x-1 shrink-0 border-l border-zinc-200 pl-2 ml-1">
         <button
           type="button"
           onClick={onOpenAiSummary}
           disabled={!activeTab.url || activeTab.url === 'about:blank'}
-          className="p-1.5 rounded-lg text-indigo-300 hover:bg-indigo-600/20 hover:text-indigo-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           title="AIでページを要約"
         >
           <Sparkles className="w-4 h-4" />
@@ -173,18 +175,18 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
           type="button"
           onClick={() => onOpenExternal(activeTab.url)}
           disabled={!activeTab.url || activeTab.url === 'about:blank'}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-black hover:bg-zinc-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           title="新しいタブで開く (別ウィンドウ)"
         >
           <ExternalLink className="w-4 h-4" />
         </button>
 
-        <div className="w-px h-4 bg-slate-800 mx-1"></div>
+        <div className="w-px h-4 bg-zinc-200 mx-1"></div>
 
         <button
           type="button"
           onClick={onOpenBookmarks}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-black hover:bg-zinc-100 transition-colors"
           title="ブックマーク一覧"
         >
           <BookmarkIcon className="w-4 h-4" />
@@ -192,7 +194,7 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
         <button
           type="button"
           onClick={onOpenHistory}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="p-1.5 rounded-lg text-zinc-500 hover:text-black hover:bg-zinc-100 transition-colors"
           title="閲覧履歴"
         >
           <HistoryIcon className="w-4 h-4" />
@@ -201,3 +203,4 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
     </div>
   );
 };
+

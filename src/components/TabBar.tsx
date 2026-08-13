@@ -22,9 +22,9 @@ export const TabBar: React.FC<TabBarProps> = ({
   onToggleFullscreen,
 }) => {
   return (
-    <div className="flex items-center justify-between bg-slate-900 text-slate-200 px-3 pt-2 select-none border-b border-slate-800">
+    <div className="flex items-center justify-between bg-zinc-100 text-zinc-600 px-2 pt-2 select-none border-b border-zinc-200">
       {/* Tabs list */}
-      <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar max-w-[calc(100%-120px)]">
+      <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar max-w-full md:max-w-[calc(100%-120px)]">
         {tabs.map((tab) => {
           const isActive = tab.id === activeTabId;
           const displayTitle = tab.title || (tab.url ? tab.url.replace(/^https?:\/\//, '') : '新しいタブ');
@@ -33,13 +33,13 @@ export const TabBar: React.FC<TabBarProps> = ({
             <div
               key={tab.id}
               onClick={() => onSelectTab(tab.id)}
-              className={`group relative flex items-center space-x-2 px-3 py-2 text-xs rounded-t-lg max-w-[200px] min-w-[120px] cursor-pointer transition-all ${
+              className={`group relative flex items-center space-x-2 px-3 py-2 text-xs rounded-t-xl max-w-[160px] md:max-w-[200px] min-w-[100px] cursor-pointer transition-all ${
                 isActive
-                  ? 'bg-slate-800 text-white font-medium shadow-sm border-t-2 border-indigo-500'
-                  : 'bg-slate-900/60 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                  ? 'bg-white text-zinc-900 font-medium shadow-sm border-t-2 border-black'
+                  : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700'
               }`}
             >
-              <Globe className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
+              <Globe className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-black' : 'text-zinc-400'}`} />
               <span className="truncate flex-1">{displayTitle}</span>
               
               {/* Close tab button */}
@@ -49,7 +49,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                   e.stopPropagation();
                   onCloseTab(tab.id);
                 }}
-                className={`p-0.5 rounded-full hover:bg-slate-700 text-slate-400 hover:text-white transition-colors ${
+                className={`p-0.5 rounded-full hover:bg-zinc-300 text-zinc-400 hover:text-zinc-800 transition-colors ${
                   tabs.length === 1 ? 'opacity-40 cursor-not-allowed' : 'opacity-70 group-hover:opacity-100'
                 }`}
                 disabled={tabs.length === 1}
@@ -65,24 +65,24 @@ export const TabBar: React.FC<TabBarProps> = ({
         <button
           type="button"
           onClick={onNewTab}
-          className="p-1.5 ml-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="p-1.5 ml-1 mb-1 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-200 transition-colors shrink-0"
           title="新しいタブを開く"
         >
           <Plus className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Quick Fullscreen Toggle in Tab Header */}
-      <div className="flex items-center space-x-2 pb-1">
+      {/* Quick Fullscreen Toggle in Tab Header (Hidden on mobile) */}
+      <div className="hidden md:flex items-center space-x-2 pb-1 pr-1 shrink-0">
         <button
           type="button"
           onClick={onToggleFullscreen}
           className={`flex items-center space-x-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
             isFullscreen 
-              ? 'bg-indigo-600 text-white shadow-md' 
-              : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+              ? 'bg-black text-white shadow-md' 
+              : 'bg-white hover:bg-zinc-50 text-zinc-700 border border-zinc-200'
           }`}
-          title="大画面モード切替 (F11 / ボタン)"
+          title="大画面モード切替"
         >
           <Monitor className="w-3.5 h-3.5" />
           <span>{isFullscreen ? '大画面解除' : '大画面で見る'}</span>
@@ -91,3 +91,4 @@ export const TabBar: React.FC<TabBarProps> = ({
     </div>
   );
 };
+
