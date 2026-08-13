@@ -236,7 +236,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-screen overflow-hidden bg-white font-sans text-zinc-900 select-none pb-[env(safe-area-inset-bottom)]">
+    <div className="flex flex-col h-[100dvh] w-screen overflow-hidden bg-white font-sans text-zinc-900 select-none">
       {/* Top Tab Bar (Hidden in Fullscreen mode unless hovered or desired) */}
       {!isFullscreen && (
         <TabBar
@@ -267,6 +267,8 @@ export default function App() {
           onZoomChange={(zoom) => updateActiveTab({ zoomLevel: zoom })}
           onOpenExternal={handleOpenExternal}
           onToggleReaderMode={handleToggleReaderMode}
+          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+          isFullscreen={isFullscreen}
         />
       )}
 
@@ -279,33 +281,6 @@ export default function App() {
         isFullscreen={isFullscreen}
         onOpenExternal={handleOpenExternal}
       />
-
-      {/* Mobile Bottom Navigation (Visible only on mobile) */}
-      {!isFullscreen && (
-        <div className="md:hidden flex items-center justify-between bg-white border-t border-zinc-200 px-2 py-2 shrink-0">
-          <button onClick={handleBack} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <button onClick={handleForward} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
-            <ArrowRight className="w-5 h-5" />
-          </button>
-          <button onClick={handleReload} className={`p-1.5 sm:p-2 rounded-xl transition-colors ${activeTab.isLoading ? 'animate-spin text-black' : 'text-zinc-600 hover:text-black hover:bg-zinc-100'}`} title="再読み込み">
-            <RotateCw className="w-5 h-5" />
-          </button>
-          <button onClick={() => setIsFullscreen(true)} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors" title="大画面で見る">
-            <Monitor className="w-5 h-5" />
-          </button>
-          <button onClick={handleHome} className="p-2 sm:p-3 bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl transition-colors shadow-sm -mt-2">
-            <Home className="w-5 h-5" />
-          </button>
-          <button onClick={() => setIsBookmarksOpen(true)} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
-            <BookmarkIcon className="w-5 h-5" />
-          </button>
-          <button onClick={() => setIsHistoryOpen(true)} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
-            <LayoutGrid className="w-5 h-5" />
-          </button>
-        </div>
-      )}
 
       {/* Modals */}
       <BookmarksModal
