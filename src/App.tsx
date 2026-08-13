@@ -192,6 +192,42 @@ export default function App() {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const handleToggleReaderMode = async () => {
+    if (!activeTab.url || activeTab.url === 'about:blank') return;
+    
+    if (activeTab.isReaderMode) {
+      updateActiveTab({ isReaderMode: false });
+      return;
+    }
+
+    if (activeTab.readerContent) {
+      updateActiveTab({ isReaderMode: true });
+      return;
+    }
+
+    updateActiveTab({ isReaderLoading: true, readerError: null });
+    try {
+      const res = await fetch('/api/fetch-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: activeTab.url }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch page');
+      updateActiveTab({
+        isReaderMode: true,
+        readerContent: { title: data.title, markdown: data.markdown },
+        isReaderLoading: false
+      });
+    } catch (err: any) {
+      updateActiveTab({
+        isReaderMode: true,
+        readerError: err.message || 'ページの取得に失敗しました',
+        isReaderLoading: false
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-slate-950 font-sans text-slate-100 select-none">
       {/* Top Tab Bar (Hidden in Fullscreen mode unless hovered or desired) */}
@@ -223,6 +259,7 @@ export default function App() {
           onOpenAiSummary={() => setIsAiSummaryOpen(true)}
           onZoomChange={(zoom) => updateActiveTab({ zoomLevel: zoom })}
           onOpenExternal={handleOpenExternal}
+          onToggleReaderMode={handleToggleReaderMode}
         />
       )}
 

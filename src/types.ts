@@ -5,8 +5,11 @@ export interface Tab {
   isLoading: boolean;
   canGoBack: boolean;
   canGoForward: boolean;
-  zoomLevel: number; // e.g. 100, 125, 150, 75
+  zoomLevel: number;
   isReaderMode: boolean;
+  readerContent?: { title: string; markdown: string } | null;
+  isReaderLoading?: boolean;
+  readerError?: string | null;
 }
 
 export interface Bookmark {
