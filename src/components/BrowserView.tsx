@@ -123,7 +123,6 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
             }}
             onLoad={() => onUpdateLoading(false)}
             onError={() => onUpdateLoading(false)}
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
           />
         </div>
       )}
