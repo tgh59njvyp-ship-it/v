@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Home, Bookmark as BookmarkIcon, History as HistoryIcon, LayoutGrid, Monitor } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Home, Bookmark as BookmarkIcon, History as HistoryIcon, LayoutGrid, Monitor, RotateCw } from 'lucide-react';
 import { Tab, Bookmark, HistoryItem } from './types';
 import { TabBar } from './components/TabBar';
 import { BrowserHeader } from './components/BrowserHeader';
@@ -185,6 +185,12 @@ export default function App() {
     setBookmarks((prev) => prev.filter((b) => b.id !== id));
   };
 
+  const handleEditBookmark = (id: string, newTitle: string) => {
+    setBookmarks((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, title: newTitle } : b))
+    );
+  };
+
   const handleClearHistory = () => {
     setHistory([]);
   };
@@ -276,23 +282,26 @@ export default function App() {
 
       {/* Mobile Bottom Navigation (Visible only on mobile) */}
       {!isFullscreen && (
-        <div className="md:hidden flex items-center justify-between bg-white border-t border-zinc-200 px-3 py-2 shrink-0">
-          <button onClick={handleBack} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
+        <div className="md:hidden flex items-center justify-between bg-white border-t border-zinc-200 px-2 py-2 shrink-0">
+          <button onClick={handleBack} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <button onClick={handleForward} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
+          <button onClick={handleForward} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
             <ArrowRight className="w-5 h-5" />
           </button>
-          <button onClick={() => setIsFullscreen(true)} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors" title="大画面で見る">
+          <button onClick={handleReload} className={`p-1.5 sm:p-2 rounded-xl transition-colors ${activeTab.isLoading ? 'animate-spin text-black' : 'text-zinc-600 hover:text-black hover:bg-zinc-100'}`} title="再読み込み">
+            <RotateCw className="w-5 h-5" />
+          </button>
+          <button onClick={() => setIsFullscreen(true)} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors" title="大画面で見る">
             <Monitor className="w-5 h-5" />
           </button>
-          <button onClick={handleHome} className="p-3 bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl transition-colors shadow-sm -mt-4">
+          <button onClick={handleHome} className="p-2 sm:p-3 bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl transition-colors shadow-sm -mt-2">
             <Home className="w-5 h-5" />
           </button>
-          <button onClick={() => setIsBookmarksOpen(true)} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
+          <button onClick={() => setIsBookmarksOpen(true)} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
             <BookmarkIcon className="w-5 h-5" />
           </button>
-          <button onClick={() => setIsHistoryOpen(true)} className="p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
+          <button onClick={() => setIsHistoryOpen(true)} className="p-1.5 sm:p-2 text-zinc-600 hover:text-black hover:bg-zinc-100 rounded-xl transition-colors">
             <LayoutGrid className="w-5 h-5" />
           </button>
         </div>
@@ -305,6 +314,7 @@ export default function App() {
         bookmarks={bookmarks}
         onSelectBookmark={handleNavigate}
         onDeleteBookmark={handleDeleteBookmark}
+        onEditBookmark={handleEditBookmark}
       />
 
       <HistoryModal
