@@ -55,6 +55,82 @@ Format the output clearly in markdown.`;
     }
   });
 
+  // Direct Web Proxy endpoint to bypass X-Frame-Options and Content-Security-Policy
+  app.get("/api/proxy", async (req, res) => {
+    try {
+      const targetUrl = req.query.url as string;
+      if (!targetUrl) {
+        return res.status(400).send("URL parameter is required");
+      }
+
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(targetUrl);
+      } catch {
+        return res.status(400).send("Invalid URL format");
+      }
+
+      const response = await fetch(targetUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+          "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+        },
+        redirect: "follow",
+      });
+
+      const contentType = response.headers.get("content-type") || "text/html; charset=utf-8";
+      res.setHeader("Content-Type", contentType);
+      res.removeHeader("X-Frame-Options");
+      res.removeHeader("Content-Security-Policy");
+      res.removeHeader("Content-Security-Policy-Report-Only");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+
+      if (contentType.includes("text/html")) {
+        let html = await response.text();
+        const baseHref = `${parsedUrl.origin}${parsedUrl.pathname.substring(0, parsedUrl.pathname.lastIndexOf("/") + 1)}`;
+        const baseTag = `<base href="${baseHref}">`;
+        
+        if (html.includes("<head>")) {
+          html = html.replace("<head>", `<head>${baseTag}`);
+        } else if (html.includes("<head ")) {
+          html = html.replace(/<head[^>]*>/, `$&${baseTag}`);
+        } else {
+          html = `${baseTag}${html}`;
+        }
+        res.send(html);
+      } else {
+        const buffer = await response.arrayBuffer();
+        res.send(Buffer.from(buffer));
+      }
+    } catch (err: any) {
+      console.error("Proxy error:", err);
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html lang="ja">
+          <head>
+            <meta charset="utf-8">
+            <title>読み込みエラー</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; text-align: center; color: #333; background: #fafafa; }
+              .card { background: white; max-width: 500px; margin: 40px auto; padding: 30px; border-radius: 16px; border: 1px solid #e5e5e5; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+              h2 { font-size: 20px; margin-bottom: 12px; color: #111; }
+              p { font-size: 14px; color: #666; line-height: 1.6; }
+              .btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #111; color: #fff; text-decoration: none; border-radius: 10px; font-weight: 500; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <h2>ページの読み込みに失敗しました</h2>
+              <p>${err.message || 'このサイトへのアクセスが拒否されました。'}</p>
+              <a href="${req.query.url}" target="_blank" rel="noopener noreferrer" class="btn">別タブで直接開く</a>
+            </div>
+          </body>
+        </html>
+      `);
+    }
+  });
+
   // Fetch page proxy/reader endpoint
   app.post("/api/fetch-page", async (req, res) => {
     try {

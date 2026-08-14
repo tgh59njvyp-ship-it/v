@@ -10,6 +10,16 @@ export interface Tab {
   readerContent?: { title: string; markdown: string } | null;
   isReaderLoading?: boolean;
   readerError?: string | null;
+  useProxy?: boolean;
+}
+
+export interface QuickAccessItem {
+  id: string;
+  name: string;
+  url: string;
+  iconType?: 'globe' | 'search' | 'book' | 'code' | 'news' | 'compass' | 'video' | 'game' | 'sparkles' | 'shopping' | 'music';
+  color?: string;
+  useProxy?: boolean;
 }
 
 export interface Bookmark {

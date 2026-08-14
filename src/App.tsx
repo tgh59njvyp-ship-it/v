@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Home, Bookmark as BookmarkIcon, History as HistoryIcon, LayoutGrid, Monitor, RotateCw } from 'lucide-react';
-import { Tab, Bookmark, HistoryItem } from './types';
+import { Tab, Bookmark, HistoryItem, QuickAccessItem } from './types';
 import { TabBar } from './components/TabBar';
 import { BrowserHeader } from './components/BrowserHeader';
 import { BrowserView } from './components/BrowserView';
@@ -11,6 +11,7 @@ import { AiSummaryModal } from './components/AiSummaryModal';
 const STORAGE_KEYS = {
   BOOKMARKS: 'web_browser_bookmarks_v1',
   HISTORY: 'web_browser_history_v1',
+  QUICK_ACCESS: 'web_browser_quick_access_v2',
 };
 
 const DEFAULT_BOOKMARKS: Bookmark[] = [
@@ -18,6 +19,17 @@ const DEFAULT_BOOKMARKS: Bookmark[] = [
   { id: '2', title: 'Hacker News', url: 'https://news.ycombinator.com', createdAt: Date.now() },
   { id: '3', title: 'GitHub', url: 'https://github.com', createdAt: Date.now() },
   { id: '4', title: 'Google', url: 'https://www.google.com', createdAt: Date.now() },
+];
+
+const DEFAULT_QUICK_ACCESS: QuickAccessItem[] = [
+  { id: '1', name: 'Google', url: 'https://www.google.com', iconType: 'search', useProxy: true },
+  { id: '2', name: 'DuckDuckGo', url: 'https://duckduckgo.com', iconType: 'search' },
+  { id: '3', name: 'Wikipedia', url: 'https://ja.wikipedia.org/wiki/メインページ', iconType: 'book' },
+  { id: '4', name: 'Yahoo! JAPAN', url: 'https://www.yahoo.co.jp', iconType: 'news', useProxy: true },
+  { id: '5', name: 'GitHub', url: 'https://github.com', iconType: 'code', useProxy: true },
+  { id: '6', name: 'Hacker News', url: 'https://news.ycombinator.com', iconType: 'news' },
+  { id: '7', name: 'MDN Web Docs', url: 'https://developer.mozilla.org/ja/', iconType: 'globe' },
+  { id: '8', name: 'Example.com', url: 'https://example.com', iconType: 'compass' },
 ];
 
 export default function App() {
@@ -31,6 +43,7 @@ export default function App() {
       canGoForward: false,
       zoomLevel: 100,
       isReaderMode: false,
+      useProxy: false,
     },
   ]);
   const [activeTabId, setActiveTabId] = useState<string>('tab-1');
@@ -55,6 +68,16 @@ export default function App() {
     }
   });
 
+  // Quick Access
+  const [quickAccessItems, setQuickAccessItems] = useState<QuickAccessItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.QUICK_ACCESS);
+      return saved ? JSON.parse(saved) : DEFAULT_QUICK_ACCESS;
+    } catch {
+      return DEFAULT_QUICK_ACCESS;
+    }
+  });
+
   // Modals & Fullscreen
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isBookmarksOpen, setIsBookmarksOpen] = useState(false);
@@ -68,6 +91,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
   }, [history]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.QUICK_ACCESS, JSON.stringify(quickAccessItems));
+  }, [quickAccessItems]);
 
   // Handle Fullscreen keyboard shortcut (F11 / Esc)
   useEffect(() => {
@@ -92,17 +119,23 @@ export default function App() {
     );
   };
 
-  const handleNavigate = (url: string) => {
+  const handleNavigate = (url: string, useProxy?: boolean) => {
     let finalUrl = url.trim();
     if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
       finalUrl = `https://${finalUrl}`;
     }
+
+    // If useProxy is not explicitly provided, auto-enable for Google / Yahoo
+    const shouldProxy = useProxy !== undefined 
+      ? useProxy 
+      : (finalUrl.includes('google.com') || finalUrl.includes('google.co.jp') || finalUrl.includes('yahoo.co.jp'));
 
     updateActiveTab({
       url: finalUrl,
       title: finalUrl,
       isLoading: true,
       canGoBack: true,
+      useProxy: shouldProxy,
     });
 
     // Add to history
@@ -113,6 +146,10 @@ export default function App() {
       visitedAt: Date.now(),
     };
     setHistory((prev) => [newItem, ...prev.slice(0, 199)]);
+  };
+
+  const handleToggleProxy = () => {
+    updateActiveTab({ useProxy: !activeTab.useProxy });
   };
 
   const handleNewTab = () => {
@@ -126,6 +163,7 @@ export default function App() {
       canGoForward: false,
       zoomLevel: 100,
       isReaderMode: false,
+      useProxy: false,
     };
     setTabs((prev) => [...prev, newTab]);
     setActiveTabId(newId);
@@ -144,7 +182,7 @@ export default function App() {
   };
 
   const handleBack = () => {
-    updateActiveTab({ url: '', title: '新しいタブ', canGoBack: false });
+    updateActiveTab({ url: '', title: '新しいタブ', canGoBack: false, useProxy: false });
   };
 
   const handleForward = () => {
@@ -161,7 +199,7 @@ export default function App() {
   };
 
   const handleHome = () => {
-    updateActiveTab({ url: '', title: '新しいタブ', canGoBack: false });
+    updateActiveTab({ url: '', title: '新しいタブ', canGoBack: false, useProxy: false });
   };
 
   const isBookmarked = bookmarks.some((b) => b.url === activeTab.url && activeTab.url !== '');
@@ -189,6 +227,24 @@ export default function App() {
     setBookmarks((prev) =>
       prev.map((b) => (b.id === id ? { ...b, title: newTitle } : b))
     );
+  };
+
+  const handleSaveQuickAccessItem = (item: QuickAccessItem) => {
+    setQuickAccessItems((prev) => {
+      const exists = prev.some((i) => i.id === item.id);
+      if (exists) {
+        return prev.map((i) => (i.id === item.id ? item : i));
+      }
+      return [...prev, item];
+    });
+  };
+
+  const handleDeleteQuickAccessItem = (id: string) => {
+    setQuickAccessItems((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  const handleResetQuickAccessDefaults = () => {
+    setQuickAccessItems(DEFAULT_QUICK_ACCESS);
   };
 
   const handleClearHistory = () => {
@@ -280,6 +336,12 @@ export default function App() {
         onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
         isFullscreen={isFullscreen}
         onOpenExternal={handleOpenExternal}
+        onToggleProxy={handleToggleProxy}
+        onToggleReaderMode={handleToggleReaderMode}
+        quickAccessItems={quickAccessItems}
+        onSaveQuickAccessItem={handleSaveQuickAccessItem}
+        onDeleteQuickAccessItem={handleDeleteQuickAccessItem}
+        onResetQuickAccessDefaults={handleResetQuickAccessDefaults}
       />
 
       {/* Modals */}
@@ -308,4 +370,3 @@ export default function App() {
     </div>
   );
 }
-
