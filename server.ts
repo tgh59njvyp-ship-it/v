@@ -55,12 +55,22 @@ Format the output clearly in markdown.`;
     }
   });
 
-  // Direct Web Proxy endpoint to bypass X-Frame-Options and Content-Security-Policy
+  // Direct Web Proxy endpoint to bypass X-Frame-Options, CSP, and frame busting
   app.get("/api/proxy", async (req, res) => {
     try {
-      const targetUrl = req.query.url as string;
+      let targetUrl = (req.query.url as string) || "";
+      const searchQuery = (req.query.q as string) || "";
+
+      if (!targetUrl && searchQuery) {
+        targetUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+      }
+
       if (!targetUrl) {
-        return res.status(400).send("URL parameter is required");
+        return res.status(400).send("URL or q parameter is required");
+      }
+
+      if (!targetUrl.startsWith("http://") && !targetUrl.startsWith("https://")) {
+        targetUrl = `https://${targetUrl}`;
       }
 
       let parsedUrl: URL;
@@ -70,11 +80,19 @@ Format the output clearly in markdown.`;
         return res.status(400).send("Invalid URL format");
       }
 
+      // Mobile user agent for smartphone-friendly layout
+      const isMobile = req.headers["user-agent"]?.includes("Mobile") || req.headers["user-agent"]?.includes("Android") || req.headers["user-agent"]?.includes("iPhone");
+      const userAgent = isMobile
+        ? "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+        : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
       const response = await fetch(targetUrl, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+          "User-Agent": userAgent,
           "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
           "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+          "Sec-Fetch-Dest": "document",
+          "Sec-Fetch-Mode": "navigate",
         },
         redirect: "follow",
       });
@@ -89,14 +107,35 @@ Format the output clearly in markdown.`;
       if (contentType.includes("text/html")) {
         let html = await response.text();
         const baseHref = `${parsedUrl.origin}${parsedUrl.pathname.substring(0, parsedUrl.pathname.lastIndexOf("/") + 1)}`;
+        
+        // Remove frame busting scripts
+        html = html.replace(/if\s*\(\s*(?:window\.)?top\s*!==?\s*(?:window\.)?self\s*\)/gi, "if(false)");
+        html = html.replace(/(?:window\.)?top\.location\s*=\s*(?:window\.)?self\.location/gi, "//");
+        html = html.replace(/target=["']_top["']/gi, 'target="_self"');
+        html = html.replace(/target=["']_parent["']/gi, 'target="_self"');
+
+        // Helper script to intercept link clicks and form submits to stay inside proxy
+        const helperScript = `
+          <script>
+            (function() {
+              window.addEventListener('DOMContentLoaded', function() {
+                // Ensure all links stay within proxy if they are external
+                document.querySelectorAll('a').forEach(function(a) {
+                  if (a.target === '_top' || a.target === '_parent') a.target = '_self';
+                });
+              });
+            })();
+          </script>
+        `;
+
         const baseTag = `<base href="${baseHref}">`;
         
         if (html.includes("<head>")) {
-          html = html.replace("<head>", `<head>${baseTag}`);
+          html = html.replace("<head>", `<head>${baseTag}${helperScript}`);
         } else if (html.includes("<head ")) {
-          html = html.replace(/<head[^>]*>/, `$&${baseTag}`);
+          html = html.replace(/<head[^>]*>/, `$&${baseTag}${helperScript}`);
         } else {
-          html = `${baseTag}${html}`;
+          html = `${baseTag}${helperScript}${html}`;
         }
         res.send(html);
       } else {
@@ -110,20 +149,21 @@ Format the output clearly in markdown.`;
         <html lang="ja">
           <head>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>読み込みエラー</title>
             <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; text-align: center; color: #333; background: #fafafa; }
-              .card { background: white; max-width: 500px; margin: 40px auto; padding: 30px; border-radius: 16px; border: 1px solid #e5e5e5; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-              h2 { font-size: 20px; margin-bottom: 12px; color: #111; }
-              p { font-size: 14px; color: #666; line-height: 1.6; }
-              .btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #111; color: #fff; text-decoration: none; border-radius: 10px; font-weight: 500; font-size: 14px; }
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; text-align: center; color: #333; background: #fafafa; }
+              .card { background: white; max-width: 460px; margin: 40px auto; padding: 28px; border-radius: 20px; border: 1px solid #e5e5e5; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+              h2 { font-size: 18px; margin-bottom: 10px; color: #111; }
+              p { font-size: 13px; color: #666; line-height: 1.6; }
+              .btn { display: inline-block; margin-top: 16px; padding: 12px 24px; background: #111; color: #fff; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px; }
             </style>
           </head>
           <body>
             <div class="card">
-              <h2>ページの読み込みに失敗しました</h2>
+              <h2>ページを直接読み込めませんでした</h2>
               <p>${err.message || 'このサイトへのアクセスが拒否されました。'}</p>
-              <a href="${req.query.url}" target="_blank" rel="noopener noreferrer" class="btn">別タブで直接開く</a>
+              <a href="${req.query.url || '#'}" target="_blank" rel="noopener noreferrer" class="btn">別タブで直接開く</a>
             </div>
           </body>
         </html>

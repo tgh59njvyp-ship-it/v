@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, AlertTriangle, ExternalLink, Shield, ShieldCheck, BookOpen, Monitor, Globe, RefreshCw } from 'lucide-react';
+import { Loader2, AlertTriangle, ExternalLink, ShieldCheck, Globe } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { Tab, QuickAccessItem } from '../types';
 import { HomePage } from './HomePage';
+import { FullscreenOverlayControls } from './FullscreenOverlayControls';
 
 interface BrowserViewProps {
   activeTab: Tab;
   onNavigate: (url: string, useProxy?: boolean) => void;
+  onBack: () => void;
+  onReload: () => void;
+  onHome: () => void;
   onUpdateLoading: (isLoading: boolean) => void;
   onToggleFullscreen: () => void;
   isFullscreen: boolean;
@@ -22,6 +26,9 @@ interface BrowserViewProps {
 export const BrowserView: React.FC<BrowserViewProps> = ({
   activeTab,
   onNavigate,
+  onBack,
+  onReload,
+  onHome,
   onUpdateLoading,
   onToggleFullscreen,
   isFullscreen,
@@ -41,7 +48,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
       setHasIframeLoaded(false);
       setShowHelperBanner(false);
       
-      // Auto-detect if it's Google or other strict iframe blockers and recommend proxy
+      // Auto-detect if it's Google or strict iframe blockers and recommend proxy
       const isGoogle = activeTab.url.includes('google.com') || activeTab.url.includes('google.co.jp');
       if (isGoogle && !activeTab.useProxy) {
         setShowHelperBanner(true);
@@ -73,29 +80,29 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
   }
 
   const zoomFactor = activeTab.zoomLevel / 100;
-  const isGoogle = activeTab.url.includes('google.com') || activeTab.url.includes('google.co.jp');
 
   const effectiveIframeSrc = activeTab.useProxy
     ? `/api/proxy?url=${encodeURIComponent(activeTab.url)}`
     : activeTab.url;
 
   return (
-    <div className={`relative flex-1 bg-white overflow-hidden flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-full'}`}>
-      {/* Floating Fullscreen Exit Bar when in fullscreen mode */}
+    <div className={`relative flex-1 bg-white overflow-hidden flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-black w-screen h-[100dvh]' : 'h-full'}`}>
+      
+      {/* Floating HUD Controller for Fullscreen Mode */}
       {isFullscreen && (
-        <div className="absolute top-3 right-3 z-50 flex items-center space-x-2 bg-white/95 border border-zinc-200 shadow-xl rounded-xl px-3 py-1.5 text-zinc-900 backdrop-blur-md hover:opacity-100 opacity-60 transition-opacity">
-          <span className="text-xs text-zinc-500 font-mono truncate max-w-xs">{activeTab.url}</span>
-          <button
-            type="button"
-            onClick={onToggleFullscreen}
-            className="px-3 py-1 bg-black hover:bg-zinc-800 text-white rounded-lg text-xs font-medium transition-colors shadow"
-          >
-            大画面を解除
-          </button>
-        </div>
+        <FullscreenOverlayControls
+          activeTab={activeTab}
+          onNavigate={onNavigate}
+          onBack={onBack}
+          onReload={onReload}
+          onHome={onHome}
+          onToggleFullscreen={onToggleFullscreen}
+          onToggleProxy={onToggleProxy}
+          onOpenExternal={onOpenExternal}
+        />
       )}
 
-      {/* Mode / Proxy Control Bar (Always accessible, compact) */}
+      {/* Mode / Proxy Control Bar when NOT in fullscreen */}
       {!isFullscreen && (
         <div className="bg-zinc-100/90 border-b border-zinc-200 px-3 py-1.5 flex items-center justify-between text-xs text-zinc-600">
           <div className="flex items-center space-x-2 min-w-0">
@@ -103,7 +110,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
               {activeTab.useProxy ? (
                 <>
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span className="text-emerald-700 font-medium">プロキシ表示中 (X-Frame制限解除)</span>
+                  <span className="text-emerald-700 font-medium">プロキシ表示中 (Google等対応)</span>
                 </>
               ) : (
                 <>
@@ -125,7 +132,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
               }`}
               title="Googleやセキュリティ制限のあるサイトを直接表示できるように切り替えます"
             >
-              {activeTab.useProxy ? '通常表示に戻す' : 'プロキシに切替 (表示できない時)'}
+              {activeTab.useProxy ? '通常表示に戻す' : 'プロキシに切替'}
             </button>
             <button
               type="button"
@@ -219,7 +226,7 @@ export const BrowserView: React.FC<BrowserViewProps> = ({
           </div>
         </div>
       ) : (
-        <div className="flex-1 relative overflow-hidden bg-white">
+        <div className="flex-1 relative overflow-hidden bg-white w-full h-full">
           <iframe
             key={`${activeTab.id}-${effectiveIframeSrc}`}
             src={effectiveIframeSrc}

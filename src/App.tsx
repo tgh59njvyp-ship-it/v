@@ -96,20 +96,33 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.QUICK_ACCESS, JSON.stringify(quickAccessItems));
   }, [quickAccessItems]);
 
-  // Handle Fullscreen keyboard shortcut (F11 / Esc)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F11') {
-        e.preventDefault();
-        setIsFullscreen((prev) => !prev);
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      setIsFullscreen(true);
+      try {
+        const docEl = document.documentElement as any;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+        }
+      } catch (e) {
+        console.log("Fullscreen request error", e);
       }
-      if (e.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false);
+    } else {
+      setIsFullscreen(false);
+      try {
+        const doc = document as any;
+        if (doc.exitFullscreen && doc.fullscreenElement) {
+          doc.exitFullscreen();
+        } else if (doc.webkitExitFullscreen && doc.webkitFullscreenElement) {
+          doc.webkitExitFullscreen();
+        }
+      } catch (e) {
+        console.log("Exit fullscreen error", e);
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFullscreen]);
+    }
+  };
 
   const activeTab = tabs.find((t) => t.id === activeTabId) || tabs[0];
 
@@ -302,7 +315,7 @@ export default function App() {
           onCloseTab={handleCloseTab}
           onNewTab={handleNewTab}
           isFullscreen={isFullscreen}
-          onToggleFullscreen={() => setIsFullscreen(true)}
+          onToggleFullscreen={toggleFullscreen}
         />
       )}
 
@@ -323,7 +336,7 @@ export default function App() {
           onZoomChange={(zoom) => updateActiveTab({ zoomLevel: zoom })}
           onOpenExternal={handleOpenExternal}
           onToggleReaderMode={handleToggleReaderMode}
-          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+          onToggleFullscreen={toggleFullscreen}
           isFullscreen={isFullscreen}
         />
       )}
@@ -332,8 +345,11 @@ export default function App() {
       <BrowserView
         activeTab={activeTab}
         onNavigate={handleNavigate}
+        onBack={handleBack}
+        onReload={handleReload}
+        onHome={handleHome}
         onUpdateLoading={(isLoading) => updateActiveTab({ isLoading })}
-        onToggleFullscreen={() => setIsFullscreen((prev) => !prev)}
+        onToggleFullscreen={toggleFullscreen}
         isFullscreen={isFullscreen}
         onOpenExternal={handleOpenExternal}
         onToggleProxy={handleToggleProxy}

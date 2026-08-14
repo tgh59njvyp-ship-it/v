@@ -211,6 +211,16 @@ export const BrowserHeader: React.FC<BrowserHeaderProps> = ({
         </button>
       </div>
 
+      {/* Direct Fullscreen Button for Mobile */}
+      <button
+        type="button"
+        onClick={onToggleFullscreen}
+        className="md:hidden p-1.5 rounded-lg bg-zinc-100 text-black hover:bg-zinc-200 transition-colors shrink-0 flex items-center space-x-1"
+        title="大画面モード"
+      >
+        <Monitor className="w-5 h-5" />
+      </button>
+
       {/* Mobile Menu Button */}
       <button
         type="button"
